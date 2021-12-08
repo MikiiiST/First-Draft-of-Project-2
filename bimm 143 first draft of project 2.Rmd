@@ -1,0 +1,98 @@
+
+```{r}
+
+library(seqinr)
+library(BiocManager)
+library(Biostrings)
+library(msa)
+library(ggmsa)
+library(tinytex)
+library(bio3d)
+library(gplots)
+
+#perform multiple sequence alignment
+all_sequences_fasta <- readAAStringSet("all.sequence.fasta.txt")
+all_sequences_fasta
+
+all_sequences_align <- msa(all_sequences_fasta)
+all_sequences_align
+
+print(all_sequences_align, show="complete")
+
+msaPrettyPrint(all_sequences_align, output="tex", showNames="left",
+               showLogo="top", askForOverwrite=FALSE, verbose=FALSE)
+
+all_sequences_plot <- ggmsa(all_sequences_fasta, 300, 350, color = "Clustal", font = "DroidSansMono", char_width = 0.5, seq_name = TRUE )
+
+
+# pairwise sequencing of humans and chimpanzees
+human_chimps_fasta <- readAAStringSet("human_chimp.fasta.txt")
+human_chimps_read <- read.fasta(file = "human_chimp.fasta.txt")
+length <- 1:(length(human_chimps_read)-1)
+## print(length(human_chimps_read))
+
+seq_pairwise_matrix <- function(sequences, seq_length) {
+  
+  heatmap_matrix <- matrix(nrow=length(length), ncol=length(length))
+  
+  for (i in seq_length) {
+    for (j in seq_length){
+
+      string1 <- sequences[i]
+      string2 <- sequences[j]
+
+      list_stringset_obj = AAStringSetList(string1)
+      as.character(unlist(list_stringset_obj))
+      as_character_list = as(list_stringset_obj, "CharacterList")
+      as.list(as_character_list)
+      
+      list_stringset_obj2 = AAStringSetList(string2)
+      as.character(unlist(list_stringset_obj2))
+      as_character_list2 = as(list_stringset_obj2, "CharacterList")
+      as.list(as_character_list2)
+      
+      pairwise <- pairwiseAlignment(pattern = c(as_character_list2), subject = as_character_list)
+      heatmap_matrix[i,j] <- score(pairwise)
+    }
+  }
+  return(heatmap_matrix)
+}
+
+human_chimps_align_matrix <- seq_pairwise_matrix(human_chimps_fasta, x)
+##heatmap.2(human_chimps_align)
+human_chimps_identity <- seqidentity(human_chimps_align_matrix)
+human_chimps_identity
+
+
+# pairwise sequencing of human and dogs
+human_dogs_fasta <- readAAStringSet("human_dogs.fasta.txt")
+human_dogs_read <- read.fasta("human_dogs.fasta.txt")
+length <- 1:(length(human_dogs_read)-1)
+
+human_dogs_align_matrix <- seq_pairwise_matrix(human_dogs_fasta, length)
+human_dogs_identity <- seqidentity(human_dogs_align_matrix)
+human_dogs_identity
+
+# pairwise sequencing of human and elephants
+human_elephants_fasta <- readAAStringSet("human_elephants.fasta.txt")
+human_elephants_read <- read.fasta("human_elephants.fasta.txt")
+length <- 1:(length(human_elephants_read)-1)
+
+human_elephants_align_matrix <- seq_pairwise_matrix(human_elephants_fasta, length)
+human_elephants_identity <- seqidentity(human_elephants_align_matrix)
+human_elephants_identity
+
+
+#construct a histogram to visualize percent identity.
+percent_identity_all <- c(human_chimps_identity, human_dogs_identity, human_elephants_identity)
+
+hist(percent_identity_all,
+main="percent identity of p53 of chimpanzees, dogs, and elephants to human p53",
+xlab="Identity", xlim=c(0,1), col="blue",freq=FALSE)
+
+
+
+
+```
+
+
